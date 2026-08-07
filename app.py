@@ -9,7 +9,7 @@ import os
 # PAGE CONFIGURATION
 # ---------------------------------------------------------
 st.set_page_config(
-    page_title="Advanced Email Verification ERP",
+    page_title="Advanced Email Verification ERP  SCHOLIX PUBLICATIONS",
     page_icon="📧",
     layout="wide"
 )
@@ -87,7 +87,7 @@ def verify_single_email(email, blocklist):
     
     domain = email.split("@")[-1]
     
-    # 2. Blocklist Check (LINKED TO ERP)
+    # 2. Blocklist Check
     if domain in blocklist:
         return "Blocked Domain", f"Domain '{domain}' is in Blocklist"
     
@@ -108,6 +108,10 @@ uploaded_file = st.file_uploader("Upload your CSV file", type=["csv"])
 if uploaded_file is not None:
     df = pd.read_csv(uploaded_file)
     
+    # Generate output file name based on uploaded file name
+    original_filename = os.path.splitext(uploaded_file.name)[0]
+    output_filename = f"{original_filename}_verified.csv"
+    
     st.write("### 1. Data Preview")
     st.dataframe(df.head(5), use_container_width=True)
     
@@ -118,40 +122,47 @@ if uploaded_file is not None:
     if st.button("🚀 Start Verification Process", type="primary"):
         with st.spinner("Processing emails against Syntax, MX Records, and Blocklist..."):
             
-            statuses = []
-            reasons = []
+            valid_indices = []
+            blocked_count = 0
+            invalid_count = 0
             
-            # Run verification linked to current active blocklist
             current_blocklist = set(st.session_state.blocked_domains)
             
             for idx, row in df.iterrows():
                 email_val = row[email_col]
                 status, reason = verify_single_email(email_val, current_blocklist)
-                statuses.append(status)
-                reasons.append(reason)
+                
+                if status == "Valid":
+                    valid_indices.append(idx)
+                elif status == "Blocked Domain":
+                    blocked_count += 1
+                else:
+                    invalid_count += 1
             
-            # Attach verification results while preserving all original columns
-            df["Verification_Status"] = statuses
-            df["Verification_Reason"] = reasons
+            # Keep ONLY valid rows and original CSV columns
+            clean_df = df.loc[valid_indices].copy()
+            
+            # Remove duplicate emails within the list
+            clean_df = clean_df.drop_duplicates(subset=[email_col])
             
             st.success("Verification Completed!")
             
             # Summary Metrics
             st.write("### 2. Verification Summary")
             m1, m2, m3, m4 = st.columns(4)
-            m1.metric("Total Records", len(df))
-            m2.metric("Valid Emails", len(df[df["Verification_Status"] == "Valid"]))
-            m3.metric("Blocked Domains", len(df[df["Verification_Status"] == "Blocked Domain"]))
-            m4.metric("Invalid / Failed", len(df[~df["Verification_Status"].isin(["Valid", "Blocked Domain"])]))
+            m1.metric("Total Uploaded", len(df))
+            m2.metric("Clean / Valid Emails", len(clean_df))
+            m3.metric("Blocked Domains Removed", blocked_count)
+            m4.metric("Invalid / Failed Removed", invalid_count)
             
-            st.write("### 3. Detailed Results")
-            st.dataframe(df, use_container_width=True)
+            st.write("### 3. Clean Data Preview (Original Fields Only)")
+            st.dataframe(clean_df, use_container_width=True)
             
-            # Download Button for Updated CSV
-            csv_data = df.to_csv(index=False).encode('utf-8')
+            # Download Button with Dynamic File Name (<filename>_verified.csv)
+            csv_data = clean_df.to_csv(index=False).encode('utf-8')
             st.download_button(
-                label="📥 Download Verified CSV Results",
+                label=f"📥 Download {output_filename} ({len(clean_df)} Valid Contacts)",
                 data=csv_data,
-                file_name="verified_email_results.csv",
+                file_name=output_filename,
                 mime="text/csv"
             )
