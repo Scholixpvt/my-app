@@ -17,14 +17,40 @@ st.set_page_config(
 BLOCKLIST_FILE = "blocklist.json"
 
 # Helper functions to persist blocklist to file
-def load_blocklist():
+ def load_blocklist():
     if os.path.exists(BLOCKLIST_FILE):
         try:
             with open(BLOCKLIST_FILE, "r") as f:
                 return json.load(f)
         except Exception:
             pass
-    return ["mcri.edu.au", "uowmail.edu.au"]
+    return [
+        "mcri.edu.au",
+        "uowmail.edu.au",
+        "jefferson.edu",
+        "waitematadhb.govt.nz",
+        "southerntrust.hscni.net",
+        "mft.nhs.uk",
+        "duke.edu",
+        "nhs.net",
+        "sydney.edu.au",
+        "monashhealth.org",
+        "rcoa.ac.uk",
+        "hubruxelles.be",
+        "alumni.uct.ac.za",
+        "uw.edu",
+        "hsc.wvu.edu",
+        "gazeta.pl",
+        "doctors.org.uk",
+        "unimelb.edu.au",
+        "ggc.scot.nhs.uk",
+        "adelaide.edu.au",
+        "uct.ac.za",
+        "florey.edu.au",
+        "icatt.it",
+        "universitadipavia.it",
+        "karmanos.org"
+    ]
 
 def save_blocklist(domains):
     with open(BLOCKLIST_FILE, "w") as f:
