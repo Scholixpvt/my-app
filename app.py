@@ -25,7 +25,9 @@ def load_blocklist():
                 return json.load(f)
         except Exception:
             pass
-    return [
+            
+    # Clean list with all unique domains (duplicates removed)
+    unique_defaults = [
         "mcri.edu.au",
         "uowmail.edu.au",
         "jefferson.edu",
@@ -72,38 +74,23 @@ def load_blocklist():
         "stanford.edu",
         "cmu.edu.cn",
         "med.edu",
-        "zums.ac.ir",
-        "biology.gatech.edu",
-        "sheffield.ac.uk",
-        "anthro.ox.ac.uk",
-        "ccf.org",
-        "ahn.org",
-        "uni.edu",
-        "thewrightcenter.org",
-        "nd.edu",
-        "ndph.ox.ac.uk",
-        "cdc.gov",
-        "mums.ac.ir",
-        "mail.utoronto.ca",
-        "env.cn",
-        "umsha.ac.ir",
-        "africa-union.org",
-        "acu.edu.in",
-        "mlodz.pl",
-        "stanford.edu",
-        "cmu.edu.cn",
-        "med.edu",
     ]
+    return list(dict.fromkeys(unique_defaults))
 
 
 def save_blocklist(domains):
+    # Always keep unique order before saving
+    unique_domains = list(dict.fromkeys(domains))
     with open(BLOCKLIST_FILE, "w") as f:
-        json.dump(domains, f)
+        json.dump(unique_domains, f)
 
 
 # Initialize Session State
 if "blocked_domains" not in st.session_state:
     st.session_state.blocked_domains = load_blocklist()
+
+# Deduplicate session state on run
+st.session_state.blocked_domains = list(dict.fromkeys(st.session_state.blocked_domains))
 
 # ---------------------------------------------------------
 # 1. SIDEBAR: BLOCKLIST MANAGER
@@ -128,10 +115,11 @@ st.sidebar.write(
     f"### Current Blocked Domains ({len(st.session_state.blocked_domains)})"
 )
 
-for domain in list(st.session_state.blocked_domains):
+# Loop with unique index keys to avoid duplicate key exceptions
+for idx, domain in enumerate(list(st.session_state.blocked_domains)):
     col1, col2 = st.sidebar.columns([4, 1])
     col1.code(domain)
-    if col2.button("❌", key=f"del_{domain}"):
+    if col2.button("❌", key=f"del_{idx}_{domain}"):
         st.session_state.blocked_domains.remove(domain)
         save_blocklist(st.session_state.blocked_domains)
         st.rerun()
