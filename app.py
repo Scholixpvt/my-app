@@ -86,7 +86,6 @@ def load_blocklist():
     "stanford.edu",
     "cmu.edu.cn",
     "med.edu",
-         
     ]
 
 
