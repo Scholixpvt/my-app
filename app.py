@@ -4,7 +4,6 @@ import streamlit as st
 
 BLOCKLIST_FILE = "blocklist.json"
 
-
 def load_blocklist():
     if os.path.exists(BLOCKLIST_FILE):
         try:
@@ -12,61 +11,24 @@ def load_blocklist():
                 return json.load(f)
         except Exception:
             pass
-
     return [
-        "mcri.edu.au",
-        "uowmail.edu.au",
-        "jefferson.edu",
-        "waitematadhb.govt.nz",
-        "southerntrust.hscni.net",
-        "mft.nhs.uk",
-        "duke.edu",
-        "nhs.net",
-        "sydney.edu.au",
-        "monashhealth.org",
-        "rcoa.ac.uk",
-        "hubruxelles.be",
-        "alumni.uct.ac.za",
-        "uw.edu",
-        "hsc.wvu.edu",
-        "gazeta.pl",
-        "doctors.org.uk",
-        "unimelb.edu.au",
-        "ggc.scot.nhs.uk",
-        "adelaide.edu.au",
-        "uct.ac.za",
-        "florey.edu.au",
-        "icatt.it",
-        "universitadipavia.it",
-        "karmanos.org",
-        "zums.ac.ir",
-        "biology.gatech.edu",
-        "sheffield.ac.uk",
-        "anthro.ox.ac.uk",
-        "ccf.org",
-        "ahn.org",
-        "uni.edu",
-        "thewrightcenter.org",
-        "nd.edu",
-        "ndph.ox.ac.uk",
-        "cdc.gov",
-        "mums.ac.ir",
-        "mail.utoronto.ca",
-        "env.cn",
-        "umsha.ac.ir",
-        "africa-union.org",
-        "acu.edu.in",
-        "mlodz.pl",
-        "stanford.edu",
-        "cmu.edu.cn",
-        "med.edu",
+        "mcri.edu.au", "uowmail.edu.au", "jefferson.edu", "waitematadhb.govt.nz",
+        "southerntrust.hscni.net", "mft.nhs.uk", "duke.edu", "nhs.net",
+        "sydney.edu.au", "monashhealth.org", "rcoa.ac.uk", "hubruxelles.be",
+        "alumni.uct.ac.za", "uw.edu", "hsc.wvu.edu", "gazeta.pl",
+        "doctors.org.uk", "unimelb.edu.au", "ggc.scot.nhs.uk", "adelaide.edu.au",
+        "uct.ac.za", "florey.edu.au", "icatt.it", "universitadipavia.it",
+        "karmanos.org", "zums.ac.ir", "biology.gatech.edu", "sheffield.ac.uk",
+        "anthro.ox.ac.uk", "ccf.org", "ahn.org", "uni.edu",
+        "thewrightcenter.org", "nd.edu", "ndph.ox.ac.uk", "cdc.gov",
+        "mums.ac.ir", "mail.utoronto.ca", "env.cn", "umsha.ac.ir",
+        "africa-union.org", "acu.edu.in", "mlodz.pl", "stanford.edu",
+        "cmu.edu.cn", "med.edu",
     ]
-
 
 def save_blocklist(domains):
     with open(BLOCKLIST_FILE, "w") as f:
         json.dump(domains, f)
-
 
 # Initialize Session State
 if "blocked_domains" not in st.session_state:
@@ -76,9 +38,8 @@ if "blocked_domains" not in st.session_state:
 # 1. SIDEBAR: BLOCKLIST MANAGER
 # ---------------------------------------------------------
 st.sidebar.title("🛑 Blocklist Manager")
-st.sidebar.write(
-    "Domains listed here will be flagged as **BLOCKED** during email verification."
-)
+st.sidebar.write("Domains listed here will be flagged as **BLOCKED** during email verification.")
+
 new_domain = st.sidebar.text_input("Add Domain to Block (e.g. domain.com):")
 
 if st.sidebar.button("➕ Add Domain to Blocklist"):
@@ -88,5 +49,27 @@ if st.sidebar.button("➕ Add Domain to Blocklist"):
             st.session_state.blocked_domains.append(clean_domain)
             save_blocklist(st.session_state.blocked_domains)
             st.sidebar.success(f"Added `{clean_domain}` to blocklist!")
+            st.rerun()
         else:
             st.sidebar.warning(f"`{clean_domain}` is already in the blocklist.")
+
+st.sidebar.markdown("---")
+
+# ---------------------------------------------------------
+# MISSING SECTION: RENDER DOMAINS LIST & DELETE BUTTONS
+# ---------------------------------------------------------
+st.sidebar.subheader("Currently Blocked Domains")
+
+if st.session_state.blocked_domains:
+    # Deduplicate to prevent key collision errors
+    unique_domains = list(dict.fromkeys(st.session_state.blocked_domains))
+    
+    for idx, domain in enumerate(unique_domains):
+        col1, col2 = st.sidebar.columns([4, 1])
+        col1.write(f"• `{domain}`")
+        if col2.button("❌", key=f"del_{idx}_{domain}"):
+            st.session_state.blocked_domains.remove(domain)
+            save_blocklist(st.session_state.blocked_domains)
+            st.rerun()
+else:
+    st.sidebar.info("No domains currently blocklisted.")
